@@ -5,17 +5,16 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        
+        <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
     </head>
     
     <script>
-        if(window.WebSocket != undefined) {
-            var connection = new WebSocket('ws://localhost:8080');
-            if(connection != null) connection.onmessage = function(event) {
-              console.log('Count is: ' + event.data);
-            };
-            else console.log('error while creating websocket');
-        }
-        else console.log("web socket is not supported");
+        var socket = io();
+        socket.on('tweet', function(response){
+            var tweet = JSON.parse(response);
+            $("#tweets").append('<li>' + tweet + '</li>');
+        });
     </script>
     
     <body>
