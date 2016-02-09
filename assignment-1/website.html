@@ -1,0 +1,43 @@
+<html>
+    <head>
+        <title>Assignment - 1</title>
+        <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    </head>
+    
+    <script>
+        if(window.WebSocket != undefined) {
+            var connection = new WebSocket('ws://localhost:8080');
+            if(connection != null) connection.onmessage = function(event) {
+              console.log('Count is: ' + event.data);
+            };
+            else console.log('error while creating websocket');
+        }
+        else console.log("web socket is not supported");
+    </script>
+    
+    <body>
+        <div class="container" style="padding: 20px">
+            <div class="row">
+                <div class="col-12-md">
+                    <div class="jumbotron">
+                        <h2> COMS E6998 - Story Telling and Streaming </h2>
+                        <h3>Assignment 1 (Rakesh Yarlagadda - ry2294)</h3>
+                        <br>
+                        <p>In this assignment I am </p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col=12-md">
+                    <div class="jumbotron">
+                        <h3>Tweets</h3>
+                        <ul id='tweets'></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
