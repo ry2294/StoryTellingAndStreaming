@@ -7,6 +7,7 @@ For this assignment I have used NodeJS technology for consuming twitter data, cr
 
 ### Commands
 To run this application, download the assignment-1 folder and run the below commands.
+
 1. npm install // installs the node modules required
 
 2. node server.js // runs the server and starts consuming tweets
