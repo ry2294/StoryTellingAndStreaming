@@ -5,7 +5,10 @@ For this assignment, I have created the filter of location and given the locatio
 
 For this assignment I have used NodeJS technology for consuming twitter data, creating a websocket server and serving the home.html webpage which updates the tweets published by the server using socket.io framework.
 
+### Commands
 To run this application, download the assignment-1 folder and run the below commands.
-## npm install // installs the node modules required
-## node server.js // runs the server and starts consuming tweets
-## open url: localhost:8080/ in browser
+1. npm install // installs the node modules required
+
+2. node server.js // runs the server and starts consuming tweets
+
+3. open url: localhost:8080/ in browser
