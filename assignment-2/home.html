@@ -1,0 +1,40 @@
+<html>
+    <head>
+        <title>Assignment - 1</title>
+        <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+        <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    </head>
+    
+    <script>
+        var socket = io();
+        socket.on('tweet', function(tweet){
+            console.log(tweet);
+            $("#tweets").prepend('<div class="well">' + tweet + '</div>');
+        });
+    </script>
+    
+    <body>
+        <div class="container" style="padding: 20px">
+            <div class="row">
+                <div class="col-12-md">
+                    <div class="jumbotron">
+                        <h2> COMS E6998 - Story Telling and Streaming </h2>
+                        <h3>Assignment 1 (Rakesh Yarlagadda - ry2294)</h3>
+                        <br>
+                        <p>In this assignment I am consuming Twitter stream, which emits tweets based on the filters provided. I have given location filter and coordinates of the entire world. However, I am further filtering tweets based on whether the following fields are present: user name, location of the user, source of the tweet and text. With these filtering conditions, I have calculated the incoming volume of data to 5 tweets per second. More informaiton related to tweet can be looked up at <a>https://dev.twitter.com/overview/api/tweets</a> </p>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col=12-md">
+                        <h3>Tweets</h3>
+                        <div id='tweets'></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
