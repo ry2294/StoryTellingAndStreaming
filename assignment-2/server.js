@@ -1,6 +1,9 @@
 var express = require('express'); // Handles HTTP requests Eg: GET, PUT etc.
 var Twitter = require('twitter'); // Handles connecting with twitter streaming api
 var path = require("path"); // Manipulates file path names
+var redis = require("redis"); // Library of redis methods
+var clientRedis = redis.createClient(); // Creating a redis client instance
+var lastTimeStamp = 0;
 
 // create server and handle the HTTP GET request for homepage
 var app = express();
@@ -36,20 +39,27 @@ var processTweet = function(rawTweet) {
     if(rawTweet.geo != null && rawTweet.user != null && rawTweet.user.name != null 
         && rawTweet.text!= null && rawTweet.source != null) {
             var tweet = "<p>";
-            tweet += "{name: " + rawTweet.user.name + "<br>";
+            tweet += "name: " + rawTweet.user.name + "<br>";
             tweet += "tweet: " + rawTweet.text + "<br>";
             tweet += "geo: " + JSON.stringify(rawTweet.geo) + "<br>";
-            tweet += "source: " + rawTweet.source + "}";
+            tweet += "source: " + rawTweet.source + "<br>";
+            tweet += "timestamp_ms: " + rawTweet.timestamp_ms;
             tweet += "</p>";
-            console.log(tweet); // outputs tweet data onto stdout
+            console.log(rawTweet.timestamp_ms); // outputs tweet data onto stdout
             io.emit('tweet', tweet); // emits tweet to all the websockets
+            if(lastTimeStamp == 0) {
+                lastTimeStamp = rawTweet.timestamp_ms;
+            } else {
+                var delta = rawTweet.timestamp_ms - lastTimeStamp;
+                clientRedis.set(rawTweet.timestamp_ms, delta);
+                clientRedis.expire(rawTweet.timestamp_ms, 10);
+                lastTimeStamp = rawTweet.timestamp_ms;
+            }
         }
 };
 
 // stream tweets of the entire world, process them and 
-// publich it to all the web sockets connected to the server.
-client.stream('statuses/filter', {'locations':'-180,-90,180,90'},function(stream){
-    stream.on('data', function(data) {
-        processTweet(data);
-    });
+// publish it to all the web sockets connected to the server.
+client.stream('statuses/filter', {track:'hiring'},function(stream){
+    stream.on('data', processTweet);
 });
