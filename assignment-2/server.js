@@ -3,7 +3,8 @@ var Twitter = require('twitter'); // Handles connecting with twitter streaming a
 var path = require("path"); // Manipulates file path names
 var redis = require("redis"); // Library of redis methods
 var clientRedis = redis.createClient(); // Creating a redis client instance
-var lastTimeStamp = 0;
+var lastTimeStamp = 0; // tracks the last timestamp recorded
+var rateThreshold = 5; // 5 tweets per second
 
 // create server and handle the HTTP GET request for homepage
 var app = express();
@@ -45,7 +46,6 @@ var processTweet = function(rawTweet) {
             tweet += "source: " + rawTweet.source + "<br>";
             tweet += "timestamp_ms: " + rawTweet.timestamp_ms;
             tweet += "</p>";
-            console.log(rawTweet.timestamp_ms); // outputs tweet data onto stdout
             io.emit('tweet', tweet); // emits tweet to all the websockets
             if(lastTimeStamp == 0) {
                 lastTimeStamp = rawTweet.timestamp_ms;
@@ -63,3 +63,35 @@ var processTweet = function(rawTweet) {
 client.stream('statuses/filter', {track:'hiring'},function(stream){
     stream.on('data', processTweet);
 });
+
+function calculateStreamRate() {
+    clientRedis.keys("*", function(error, keys) {
+        if(error) console.log("Error faced while fetching keys = " + JSON.stringify(error));
+        else {
+            clientRedis.mget(keys, function(error, values) {
+                if(error) console.log("Error faced while fetching values for given keys = " + JSON.stringify(error));
+                else if(values == null || values.length <= 0) console.log("No values present");
+                else {
+                    var sum = 0;
+                    for(var i = 0; i < values.length; i++) {
+                        sum += parseInt(values[i]);
+                    }
+                    sum /= 1000;
+
+                    var rate = "<p> rate = " + values.length / sum + 
+                    " tweets per sec <br> sum of deltas = " + sum + 
+                    " secs <br> Total timestamps = " + values.length + 
+                    " tweets <br> Redis Key Expiration Time = 10 secs </p>";
+                    io.emit('rate', rate);
+                    if(rateThreshold < (values.length / sum)) {
+                        var ratealert = "<p> Alert <br> Threshold breach rate: " + values.length / sum + 
+                        " <br> Threshold value: " + rateThreshold + "</p>";
+                        io.emit('alert', ratealert);
+                        console.log(ratealert);
+                    }
+                }
+            });
+        }
+    });
+}
+setInterval(calculateStreamRate, 10 * 1000);

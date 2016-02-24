@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>Assignment - 1</title>
+        <title>Assignment - 2</title>
         <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
         <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
@@ -15,24 +15,40 @@
             console.log(tweet);
             $("#tweets").prepend('<div class="well">' + tweet + '</div>');
         });
+        
+        socket.on('rate', function(rate) {
+            console.log(rate);
+            $("#rate").prepend('<div class="well">' + rate + '</div>')
+        });
+        
+        socket.on('alert', function(alert) {
+            console.log(alert);
+            $("#alert").prepend('<div class="well">' + alert + '</div>')
+        });
     </script>
     
     <body>
         <div class="container" style="padding: 20px">
             <div class="row">
-                <div class="col-12-md">
-                    <div class="jumbotron">
-                        <h2> COMS E6998 - Story Telling and Streaming </h2>
-                        <h3>Assignment 1 (Rakesh Yarlagadda - ry2294)</h3>
-                        <br>
-                        <p>In this assignment I am consuming Twitter stream, which emits tweets based on the filters provided. I have given location filter and coordinates of the entire world. However, I am further filtering tweets based on whether the following fields are present: user name, location of the user, source of the tweet and text. With these filtering conditions, I have calculated the incoming volume of data to 5 tweets per second. More informaiton related to tweet can be looked up at <a>https://dev.twitter.com/overview/api/tweets</a> </p>
-                    </div>
+                <div class="col-md-12 jumbotron">
+                    <h2> COMS E6998 - Story Telling and Streaming </h2>
+                    <h3>Assignment 2 (Rakesh Yarlagadda - ry2294)</h3>
+                    <br>
+                    <p>I have selected Twitter for streaming data and filtered it based on #hiring hashtag. So, Twitter stream api will be sending tweets containing this hashtag. For every tweet I recieve, I record its timestamp and calculate delta which is the time difference between last recorded timestamp. These deltas along with their timestamp are inserted into redis with an expiration time of 10 secs. In parallel, I query redis for every 10 secs period to calculate the rate of the stream. I have assigned the threshold value of 5 tweets per sec. So, my application will fire a alert for every 10 secs time interval if the stream rate breaches the threshold value. In this web page there are three sections. First section displays the tweets. Second, displays the rate of the stream. Third seciton displays the alerts fired by the server if there is a breach in the threshold. </p>
                 </div>
             </div>
             <div class="row">
-                <div class="col=12-md">
-                        <h3>Tweets</h3>
-                        <div id='tweets'></div>
+                <div class="col-md-4">
+                    <h3>Tweets</h3>
+                    <div id='tweets'></div>
+                </div>
+                <div class="col-md-4">
+                    <h3>Stream Rate</h3>
+                    <div id='rate'></div>
+                </div>
+                <div class="col-md-4">
+                    <h3>Stream Alert</h3>
+                    <div id='alert'></div>
                 </div>
             </div>
         </div>
