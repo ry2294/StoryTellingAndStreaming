@@ -16,12 +16,21 @@
             $("#tweets").prepend('<div class="well">' + tweet + '</div>');
         });
         
-        socket.on('rate', function(rate) {
-            $("#rate").prepend('<div class="well">' + rate + '</div>')
+        socket.on('rateandentropy', function(rateandentropy) {
+            $("#rateandentropy").prepend('<div class="well">' + rateandentropy + '</div>')
         });
         
         socket.on('alert', function(alert) {
             $("#alert").prepend('<div class="well">' + alert + '</div>')
+        });
+        
+        socket.on('histogram', function(response) {
+            if(response != null) {
+                var x = []; var y = [];
+                $.each(response, function(key, value) {y.push(value); x.push(key);});
+                var graphData = [{ x: x, y: y, type: 'bar'}];
+                Plotly.newPlot('histogram', graphData);
+            }
         });
         
     </script>
@@ -33,7 +42,7 @@
                     <h2> COMS E6998 - Story Telling and Streaming </h2>
                     <h3>Assignment 3 (Rakesh Yarlagadda - ry2294)</h3>
                     <br>
-                    <p>I have selected Twitter for streaming data and filtered it based on #hiring hashtag.</p>
+                    <p>I have selected Twitter for streaming data and filtered it based on #hiring hashtag. I have categroized these tweets furthur based on the city from which the tweet is created. Then I am storing this distribution in Redis and calculated the entropy and rate of the stream and plotted it in a histogram. Finally, I have created a alerting system which alerts the user listening in the websocket whenever the entropy breaches the threshold.</p>
                 </div>
             </div>
             <div class="row">
@@ -47,8 +56,8 @@
                     <div id='tweets'></div>
                 </div>
                 <div class="col-md-4">
-                    <h3>Stream Rate</h3>
-                    <div id='rate'></div>
+                    <h3>Stream Rate & Entropy</h3>
+                    <div id='rateandentropy'></div>
                 </div>
                 <div class="col-md-4">
                     <h3>Stream Alert</h3>
@@ -57,31 +66,4 @@
             </div>
         </div>
     </body>
-    
-    <script>
-        var plot = function() {
-            $.get("https://assignment-3-storytelling-streaming-ry2294.c9users.io/histogram", function(response) {
-                if(response != null && response.length > 0) {
-                    var data = JSON.parse(response);
-                    var x = [];
-                    var y = [];
-                    $.each(data, function(key, value) {
-                        y.push(value);
-                        x.push(key);
-                    });
-                    var graphData = [
-                          {
-                            x: x,
-                            y: y,
-                            type: 'bar'
-                          }
-                        ];
-                    console.log("graphData = " + JSON.stringify(graphData));
-                    Plotly.newPlot('histogram', graphData);
-                    console.log("response = " + response);
-                }
-            });
-        };
-        setTimeout(plot, 1);
-    </script>>
 </html>

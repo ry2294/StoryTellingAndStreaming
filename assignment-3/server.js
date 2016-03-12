@@ -13,9 +13,9 @@ router.get('/', function(req, res) {
   res.sendfile(path.join(__dirname + '/home.html'));
 });
 
-router.get('/rate', function(req, res) {rate(res);});
-router.get('/histogram', function(req, res) {buildHistogram(res);});
-router.get('/entropy', function(req, res) {entropy(res);});
+router.get('/rate', function(req, res) {rate(function(data) {res.send(JSON.stringify(data));});});
+router.get('/histogram', function(req, res) {buildHistogram(function(data) {res.send(JSON.stringify(data));});});
+router.get('/entropy', function(req, res) {entropy(function(data) {res.send(JSON.stringify(data));});});
 router.get('/probability', function(req, res) {probability(req, res);});
 /*
 Creates the server and listens on port 5000. We are also logging this information once the server gets created.
@@ -60,12 +60,11 @@ var processTweet = function(rawTweet) {
             tweet += "tweet: " + rawTweet.text + "<br>";
             tweet += "</p>";
             io.emit('tweet', tweet); // emits tweet to all the websockets
-            clientRedis.incr(rawTweet.source);
+            clientRedis.incr(rawTweet.place.name);
         }
 };
 
 var probability = function(req, res) {
-    console.log("parameters = " + req.query.city);
     if(req.query != null && req.query.city == null) {
         res.status(501).send("Invalid City").end();
         return;
@@ -95,10 +94,10 @@ var probability = function(req, res) {
     }
 };
 
-var entropy = function(res) {
+var entropy = function(func) {
     clientRedis.keys("*", function(error, keys) {
         if(error) console.log("Error fetching keys = " + JSON.stringify(error));
-        else if(keys == null || keys.length == 0) return res.status(200).send(JSON.stringify(0)).end();
+        else if(keys == null || keys.length == 0) return func(0);
         else clientRedis.mget(keys, function(error, values) {
             if(error) console.log("Error fetching values = " + JSON.stringify(error));
             else {
@@ -106,34 +105,30 @@ var entropy = function(res) {
                 for(var value of values) {
                     sum += parseInt(value) * Math.log(parseInt(value));
                 }
-                res.status(200).send(JSON.stringify(sum)).end();
+                func(sum);
             }
         });
     });
 }
 
 /*
-
 */
-var buildHistogram = function(res) {
+var buildHistogram = function(func) {
     var histogram = {};
     clientRedis.keys("*", function(error, keys) {
         if(error) console.log("Error fetching keys = " + JSON.stringify(error));
-        else if(keys == null || keys.length == 0) return res.status(200).send(JSON.stringify(0)).end();
+        else if(keys == null || keys.length == 0) return func(histogram);
         else clientRedis.mget(keys, function(error, values) {
             if(error) console.log("Error fetching values = " + JSON.stringify(error));
             else {
                 var sum = 0;
-                console.log("values length = " + values.length);
                 for(var value of values) {
                     sum += parseInt(value);
-                    console.log(value);
                 }
                 for(var i = 0; i < keys.length; i++) {
                     histogram[keys[i]] = parseInt(values[i]) / sum;
                 }
-                console.log(histogram);
-                res.status(200).send(JSON.stringify(histogram)).end();
+                func(histogram);
             }
         });
     });
@@ -141,19 +136,19 @@ var buildHistogram = function(res) {
 
 /*
 */
-var rate = function(res) {
+var rate = function(func) {
     clientRedis.keys("*", function(error, keys) {
         if(error) console.log("Error fetching keys = " + JSON.stringify(error));
-        else if(keys == null || keys.length == 0) return res.status(200).send(JSON.stringify(0)).end();
+        else if(keys == null || keys.length == 0) return func(0);
         else {
             clientRedis.mget(keys, function(error, values) {
                 if(error) console.log("Error fetching values = " + JSON.stringify(error));
                 else {
                     var sum = 0;
                     for(var value of values) {
-                        sum += parseInt(value);
+                        if(parseInt(value) > 2) sum += parseInt(value);
                     }
-                    res.status(200).send(JSON.stringify(sum)).end();
+                    func(sum);
                 }
             });
         }
@@ -171,7 +166,7 @@ var decrementer = function() {
                 if(error) console.log("Error fetching values = " + JSON.stringify(error));
                 else {
                     for(var i = 0; i < keys.length; i++) {
-                        if(parseInt(values[i]) > 1) clientRedis.decr(keys[i]);
+                        if(parseInt(values[i]) > 2) clientRedis.decr(keys[i]);
                     }
                 }
             });
@@ -179,10 +174,35 @@ var decrementer = function() {
     });
 };
 
+var emitStreamRateandEntropy = function() {
+    rate(function(rate) {
+        entropy(function(entropy) {
+            var rateandentropy = "<p> rate = " + rate + 
+                    " tweets per sec <br>" + 
+                    " entropy = " + entropy + " </p>";
+            io.emit('rateandentropy', rateandentropy);
+            var thresholdEntropy = 400;
+            var entropyandthreshold = "<p> Entropy = " + entropy + "<br>" + 
+                    " Threshold Entropy = " + thresholdEntropy + " </p>";
+            if(entropy > thresholdEntropy)
+                io.emit('alert', entropyandthreshold);
+        });
+    });
+};
+
+var emitStreamHistogram = function() {
+    buildHistogram(function(data) {
+        //console.log('histogram data = ' + JSON.stringify(data));
+        io.emit('histogram', data);
+    });
+};
+
 /*
 We call the decrementer method for every two seconds time interval.
 */
 setInterval(decrementer, 2000);
+setInterval(emitStreamRateandEntropy, 1000);
+setInterval(emitStreamHistogram, 5000);
 
 /*
 We call the Twitter streaming api with the filter on #hiring hashtag. So, this informs the streaming api that my application is only interested in tweets which contain the #hiring hastag. Then we call the processTweet function on each of the tweet we recieve.
