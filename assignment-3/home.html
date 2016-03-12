@@ -7,24 +7,23 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
         <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     </head>
     
     <script>
         var socket = io();
         socket.on('tweet', function(tweet){
-            console.log(tweet);
             $("#tweets").prepend('<div class="well">' + tweet + '</div>');
         });
         
         socket.on('rate', function(rate) {
-            console.log(rate);
             $("#rate").prepend('<div class="well">' + rate + '</div>')
         });
         
         socket.on('alert', function(alert) {
-            console.log(alert);
             $("#alert").prepend('<div class="well">' + alert + '</div>')
         });
+        
     </script>
     
     <body>
@@ -35,6 +34,11 @@
                     <h3>Assignment 3 (Rakesh Yarlagadda - ry2294)</h3>
                     <br>
                     <p>I have selected Twitter for streaming data and filtered it based on #hiring hashtag.</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="histogram" style="height:400px;"></div>
                 </div>
             </div>
             <div class="row">
@@ -53,4 +57,31 @@
             </div>
         </div>
     </body>
+    
+    <script>
+        var plot = function() {
+            $.get("https://assignment-3-storytelling-streaming-ry2294.c9users.io/histogram", function(response) {
+                if(response != null && response.length > 0) {
+                    var data = JSON.parse(response);
+                    var x = [];
+                    var y = [];
+                    $.each(data, function(key, value) {
+                        y.push(value);
+                        x.push(key);
+                    });
+                    var graphData = [
+                          {
+                            x: x,
+                            y: y,
+                            type: 'bar'
+                          }
+                        ];
+                    console.log("graphData = " + JSON.stringify(graphData));
+                    Plotly.newPlot('histogram', graphData);
+                    console.log("response = " + response);
+                }
+            });
+        };
+        setTimeout(plot, 1);
+    </script>>
 </html>
