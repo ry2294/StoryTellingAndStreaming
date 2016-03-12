@@ -1,0 +1,56 @@
+<html>
+    <head>
+        <title>Assignment - 3</title>
+        <script src="https://google-code-prettify.googlecode.com/svn/loader/run_prettify.js"></script>
+        <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+        <script src="https://cdn.socket.io/socket.io-1.3.7.js"></script>
+    </head>
+    
+    <script>
+        var socket = io();
+        socket.on('tweet', function(tweet){
+            console.log(tweet);
+            $("#tweets").prepend('<div class="well">' + tweet + '</div>');
+        });
+        
+        socket.on('rate', function(rate) {
+            console.log(rate);
+            $("#rate").prepend('<div class="well">' + rate + '</div>')
+        });
+        
+        socket.on('alert', function(alert) {
+            console.log(alert);
+            $("#alert").prepend('<div class="well">' + alert + '</div>')
+        });
+    </script>
+    
+    <body>
+        <div class="container" style="padding: 20px">
+            <div class="row">
+                <div class="col-md-12 jumbotron">
+                    <h2> COMS E6998 - Story Telling and Streaming </h2>
+                    <h3>Assignment 3 (Rakesh Yarlagadda - ry2294)</h3>
+                    <br>
+                    <p>I have selected Twitter for streaming data and filtered it based on #hiring hashtag.</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <h3>Tweets</h3>
+                    <div id='tweets'></div>
+                </div>
+                <div class="col-md-4">
+                    <h3>Stream Rate</h3>
+                    <div id='rate'></div>
+                </div>
+                <div class="col-md-4">
+                    <h3>Stream Alert</h3>
+                    <div id='alert'></div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
