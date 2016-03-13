@@ -13,6 +13,9 @@ router.get('/', function(req, res) {
   res.sendfile(path.join(__dirname + '/home.html'));
 });
 
+/*
+APIs that are exposed to the web browser or clients to fetch histogram, rate, entropy and probability related data. In total there are four apis for each of the data item.
+*/
 router.get('/rate', function(req, res) {rate(function(data) {res.send(JSON.stringify(data));});});
 router.get('/histogram', function(req, res) {buildHistogram(function(data) {res.send(JSON.stringify(data));});});
 router.get('/entropy', function(req, res) {entropy(function(data) {res.send(JSON.stringify(data));});});
@@ -48,7 +51,7 @@ var client = new Twitter({
 });
 
 /*
-This method takes in a rawtweet from the twitter stream which contains information about the tweet. It extracts relevant infromation such as username, tweet text, user geo location and tweet source. It publishes this information to all clients connected to the server by emitting in the web socket on tweet channel. All clients who are subscribed to this channel will recieve this extracted tweet data to display. We then identify the city from which the tweet is created. Finally, we increment the counter for the city by one in redis.
+This method takes in a rawtweet from the twitter stream which contains information about the tweet. It extracts relevant infromation such as username, tweet text, user geo location and tweet source. It publishes this information to all clients connected to the server by emitting in the web socket on tweet channel. All clients who are subscribed to this channel will recieve this extracted tweet data to display. We then identify the city from which the tweet is created. Finally, we create a key for the city in redis with value as 1 or increment the value of the city in redis if it already exists.
 */
 var processTweet = function(rawTweet) {
     if(rawTweet.place != null && rawTweet.place.name != null && rawTweet.user != null && rawTweet.user.name != null 
@@ -64,6 +67,9 @@ var processTweet = function(rawTweet) {
         }
 };
 
+/*
+
+*/
 var probability = function(req, res) {
     if(req.query != null && req.query.city == null) {
         res.status(501).send("Invalid City").end();
@@ -112,6 +118,7 @@ var entropy = function(func) {
 }
 
 /*
+buildHistogram method calculates for every city its histogram value by summing up all the values for all cities and dividing each value of the city with the total sum. Finally, we are returning a hashmap of cities along with their calculated values.
 */
 var buildHistogram = function(func) {
     var histogram = {};
@@ -135,6 +142,7 @@ var buildHistogram = function(func) {
 };
 
 /*
+We calculate the rate of the stream as the total sum of the values in the redis. However we consider those values which are greater than 2 because those values less than or equal to 2 are the existing ones which are not deleted.
 */
 var rate = function(func) {
     clientRedis.keys("*", function(error, keys) {
@@ -156,6 +164,7 @@ var rate = function(func) {
 };
 
 /*
+decrementer method loops through all the keys stored in the redis database based on the keys. For each key which is mapped to a city, we decerement the value by one during periodic intervals of 2 seconds. We decrement only if the value of the key is greated than 2, because otherwise the value becomes less than or equal to one which makes the logarithm of the value as 0 which disturbs the entropy calculation.
 */
 var decrementer = function() {
     clientRedis.keys("*", function(error, keys) {
@@ -174,6 +183,9 @@ var decrementer = function() {
     });
 };
 
+/*
+Emits rate and entropy of the stream to the clients. Also the method checks if the entropy value has breached the threshold. If so it sends alerts to all the clients connected.
+*/
 var emitStreamRateandEntropy = function() {
     rate(function(rate) {
         entropy(function(entropy) {
@@ -190,15 +202,18 @@ var emitStreamRateandEntropy = function() {
     });
 };
 
+/*
+Emits histogram data to clients.
+*/
 var emitStreamHistogram = function() {
     buildHistogram(function(data) {
-        //console.log('histogram data = ' + JSON.stringify(data));
+        console.log('histogram data = ' + JSON.stringify(data));
         io.emit('histogram', data);
     });
 };
 
 /*
-We call the decrementer method for every two seconds time interval.
+We call the decrementer and emit methods periodically to decrement the values in redis and to emit data to the clients through websocket.
 */
 setInterval(decrementer, 2000);
 setInterval(emitStreamRateandEntropy, 1000);
