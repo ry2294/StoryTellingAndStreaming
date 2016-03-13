@@ -68,7 +68,7 @@ var processTweet = function(rawTweet) {
 };
 
 /*
-
+probability method calcuates the probability of a tweet occuring at a city. This is being calculated by dividing the city's count with the sum of values of all the cities.
 */
 var probability = function(req, res) {
     if(req.query != null && req.query.city == null) {
@@ -100,6 +100,9 @@ var probability = function(req, res) {
     }
 };
 
+/*
+entropy method calculates the total entropy of the distribution by multiplying each value of the city with its logarithmic value and summing up the products of all cities.
+*/
 var entropy = function(func) {
     clientRedis.keys("*", function(error, keys) {
         if(error) console.log("Error fetching keys = " + JSON.stringify(error));
